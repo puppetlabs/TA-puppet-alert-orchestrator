@@ -6,21 +6,49 @@ on:
       - main
 
 jobs:
-  appinspect:
+  build:
     runs-on: ubuntu-latest
-    container: ghcr.io/coreymbe/splunk-appinspect:v3
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set App Name
-        id: repo-name
-        run: |
-          repo_name=$(basename ${{ github.repository }})
-          echo "splunk_app=$repo_name" >> $GITHUB_OUTPUT
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install UCC framework
+        run: pip install -r requirements-dev.txt
+
+      - name: Install Python runtime dependencies into lib/
+        run: pip install -r requirements.txt --target TA-puppet-alert-orchestrator/lib
+
+      - name: Build configuration page (UCC)
+        run: ucc-gen build --source TA-puppet-alert-orchestrator
+
+      - name: Upload built app
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-app
+          path: output/
+
+  appinspect:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install AppInspect
+        run: pip install splunk-appinspect
+
+      - name: Download built app
+        uses: actions/download-artifact@v4
+        with:
+          name: built-app
 
       - name: Run AppInspect
-        run: splunk-appinspect inspect ${{ steps.repo-name.outputs.splunk_app }} --output-file appinspect_result.json --mode precert --included-tags cloud
+        run: splunk-appinspect inspect TA-puppet-alert-orchestrator --output-file appinspect_result.json --mode precert --included-tags cloud
 
       - name: Check AppInspect Errors
         id: appinspect-errors
@@ -49,5 +77,5 @@ jobs:
       - name: Upload AppInspect Results
         uses: actions/upload-artifact@v4
         with:
-          name: AppInspect_${{ steps.repo-name.outputs.splunk_app }}
+          name: AppInspect_TA-puppet-alert-orchestrator
           path: appinspect_result.json

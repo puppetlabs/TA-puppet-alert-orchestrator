@@ -9,10 +9,10 @@ def override(setting_name, helper):
     alert_setting = helper.get_param(setting_name)
     global_setting = helper.get_global_setting(setting_name)
 
-    if alert_setting is not None and alert_setting is not '':
+    if alert_setting is not None and alert_setting != '':
         final_value = alert_setting
         helper.log_debug("Alert value present for '{}' it is '{}'".format(setting_name, final_value))
-    elif global_setting is not None and global_setting is not '':
+    elif global_setting is not None and global_setting != '':
         final_value = global_setting
         helper.log_debug("Alert value NOT present for '{}', using Global value '{}'".format(setting_name,final_value))
     else:
@@ -23,7 +23,7 @@ def override(setting_name, helper):
 
 # function to make sure we only set values we know aren't None
 def notnone(default_value, possible_none, helper):
-    if possible_none is not None and possible_none is not '':
+    if possible_none is not None and possible_none != '':
         helper.log_debug("notnone: True")
         return possible_none
     else:
@@ -197,7 +197,7 @@ def process_event(helper, *args, **kwargs):
     helper.log_debug("raw_task_parameters={}".format(raw_task_parameters))
 
     helper.log_debug("Validating if user provided Task Parameters are valid json")
-    if raw_task_parameters is not None and raw_task_parameters is not '':
+    if raw_task_parameters is not None and raw_task_parameters != '':
         try:
             json_task_parameters = json.loads(raw_task_parameters)
             task_parameters = json.dumps(json_task_parameters)

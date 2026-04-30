@@ -8,7 +8,6 @@ from splunktaucclib.rest_handler.endpoint import (
     MultipleModel,
 )
 from splunktaucclib.rest_handler import admin_external, util
-from splunk_aoblib.rest_migration import ConfigMigrationHandler
 
 util.remove_http_proxy_env_vars()
 
@@ -92,9 +91,16 @@ fields_additional_parameters = [
         encrypted=False,
         default='',
         validator=validator.String(
-            min_len=0, 
-            max_len=8192, 
+            min_len=0,
+            max_len=8192,
         )
+    ),
+    field.RestField(
+        'ssl_verify',
+        required=False,
+        encrypted=False,
+        default=0,
+        validator=None
     )
 ]
 model_additional_parameters = RestModel(fields_additional_parameters, name='additional_parameters')
@@ -112,5 +118,4 @@ endpoint = MultipleModel(
 if __name__ == '__main__':
     admin_external.handle(
         endpoint,
-        handler=ConfigMigrationHandler,
     )

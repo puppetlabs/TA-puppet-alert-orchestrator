@@ -1,0 +1,6 @@
+# Runtime dependencies installed into TA-puppet-alert-orchestrator/lib/
+# Install with: pip install -r requirements.txt --target TA-puppet-alert-orchestrator/lib
+splunk-sdk>=2.1.0
+splunktaucclib>=6.0.0
+requests>=2.31.0
+certifi>=2024.0.0

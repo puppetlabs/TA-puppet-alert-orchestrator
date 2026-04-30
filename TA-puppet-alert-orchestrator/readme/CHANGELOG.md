@@ -2,6 +2,23 @@
 
 ### Puppet Alert Orchestrator add-on for Splunk
 
+## Version 2.0.0
+
+**Breaking Changes**:
+
+  * This release no longer uses the Splunk Add-on Builder (AOB) framework. The add-on has been fully migrated to the [Splunk UCC Framework](https://splunk.github.io/addonfactory-ucc-generator/).
+  * The `ConfigMigrationHandler` has been removed. Existing credential store entries must be re-entered after upgrading from v1.x.
+  * The `aob_py3/` vendored Python library directory has been removed. Runtime dependencies are now installed into `lib/` at build time via pip.
+
+**New Features**:
+
+  * **Verify SSL Certificate**: New optional setting in the Add-on Settings tab to enable SSL certificate verification for connections to Puppet Enterprise. Disabled by default to support self-signed certificates common in PE installations.
+
+**Fixes**:
+
+  * Fixed `is not ''` comparisons across all alert action helper and action files, which caused `SyntaxWarning` errors and script failures on newer versions of Splunk.
+  * Alert action forms now correctly pre-populate default values: `puppet_environment` defaults to `production` and `action_target` defaults to `$result.host$`.
+
 ## Version 1.0.1
 
 **Fixes**:

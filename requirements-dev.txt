@@ -1,0 +1,5 @@
+# Development dependencies for building and packaging the add-on
+# Install with: pip install -r requirements-dev.txt
+splunk-add-on-ucc-framework>=6.4.0
+splunk-packaging-toolkit
+splunk-appinspect

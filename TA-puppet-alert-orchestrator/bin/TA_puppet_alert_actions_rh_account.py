@@ -8,7 +8,6 @@ from splunktaucclib.rest_handler.endpoint import (
     SingleModel,
 )
 from splunktaucclib.rest_handler import admin_external, util
-from splunk_aoblib.rest_migration import ConfigMigrationHandler
 
 util.remove_http_proxy_env_vars()
 
@@ -54,5 +53,4 @@ endpoint = SingleModel(
 if __name__ == '__main__':
     admin_external.handle(
         endpoint,
-        handler=ConfigMigrationHandler,
     )

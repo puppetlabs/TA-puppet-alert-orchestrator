@@ -2,6 +2,8 @@
 #
 import sys
 import os
+import time
+from requests.exceptions import ConnectionError as RequestsConnectionError
 #
 #
 # If Splunk was installed in a custom location, change SPLUNK_APPS to the path where apps are installed.
@@ -11,16 +13,16 @@ if os.name == 'nt':
 else:
   SPLUNK_APPS = '/opt/splunk/etc/apps'
 PIE_LIB = os.path.join(SPLUNK_APPS, APP_NAME, 'bin', 'ta_puppet_alert_actions')
-AOB_LIB = os.path.join(SPLUNK_APPS, APP_NAME, 'bin', 'ta_puppet_alert_actions', 'aob_py3')
 #
 #
 # Here we modify the system path for Python to find the required helper libs.
 try:
-  PATHS = [PIE_LIB,AOB_LIB]
+  LIB_DIR = os.path.join(SPLUNK_APPS, APP_NAME, 'lib')
+  PATHS = [PIE_LIB, LIB_DIR]
   for path in PATHS:
     sys.path.append(path)
   import pie
-  from splunk_aoblib.setup_util import Setup_Util
+  from splunktaucclib.splunk_aoblib.setup_util import Setup_Util
 except Exception as e:
   sys.stderr.write("TA-puppet-alert-orchestrator: Failed to import required libs - {}".format(e))
 #
@@ -32,19 +34,30 @@ session_key = sys.stdin.readline().strip()
 #
 # Configure the AOB Helper (Setup_Util) to access the settings configured in the add-on.
 # This also takes a custom logger as a third attribute. Currently we are utilizing the default behaviour of input scripts logging stderr to splunkd.log.
-helper = Setup_Util(uri,session_key)
-#
-# 
-# Build a dictionary of the custom inputs utilized to retrieve the available actions.
-inputs = {}
-inputs['hec_token'] = helper.get_customized_setting("splunk_hec_token")
-inputs['hec_url'] = helper.get_customized_setting("splunk_hec_url")
-inputs['pe_console'] = helper.get_customized_setting("puppet_enterprise_console")
-inputs['timeout'] = helper.get_customized_setting("timeout")
+# Retry up to 5 times with a 30s delay to handle the case where the script runs before
+# Splunk's REST API is ready (e.g. at startup).
+MAX_RETRIES = 5
+RETRY_DELAY = 30
+for attempt in range(1, MAX_RETRIES + 1):
+  try:
+    helper = Setup_Util(uri,session_key)
+    inputs = {}
+    inputs['hec_token'] = helper.get_customized_setting("splunk_hec_token").strip()
+    inputs['hec_url'] = helper.get_customized_setting("splunk_hec_url").strip()
+    inputs['pe_console'] = helper.get_customized_setting("puppet_enterprise_console").strip()
+    inputs['timeout'] = helper.get_customized_setting("timeout")
+    break
+  except RequestsConnectionError as e:
+    if attempt < MAX_RETRIES:
+      sys.stderr.write("TA-puppet-alert-orchestrator: Splunk REST API not available, retrying in {}s (attempt {}/{}) - {}\n".format(RETRY_DELAY, attempt, MAX_RETRIES, e))
+      time.sleep(RETRY_DELAY)
+    else:
+      sys.stderr.write("TA-puppet-alert-orchestrator: Splunk REST API unavailable after {} attempts, exiting - {}\n".format(MAX_RETRIES, e))
+      sys.exit(0)
 #
 #
 # Check if there is a configured timeout.
-if inputs['timeout'] is not None and inputs['timeout'] is not '':
+if inputs['timeout'] is not None and inputs['timeout'] != '':
   timeout = inputs['timeout']
 else:
   timeout = 360
@@ -85,7 +98,7 @@ try:
         #
         # Add any task parameters to the event message.
         try:
-          tmessage['task_meta'] = task_parameter['metadata']['parameters']
+          tmessage['task_meta'] = task_parameter['metadata'].get('parameters', {})
           for param in tmessage['task_meta']:
             tmessage['task_params'].append(param)
           #
@@ -97,8 +110,8 @@ try:
             post_tasks = pie.hec.post_action(tmessage,host,hec_url,hec_token)
           except Exception as e:
             sys.stderr.write("TA-puppet-alert-orchestrator: Failed to post task data to Splunk - {}".format(e))
-        except:
-          pass
+        except Exception as e:
+          sys.stderr.write("TA-puppet-alert-orchestrator: Failed to retrieve task parameters for {} - {} raw response: {}\n".format(task['name'], e, task_parameter))
       #
       # Build event message for available Plans by user.
       planlist = pie.orch.get_planlist(inputs['pe_console'],token)
@@ -115,7 +128,7 @@ try:
         #
         # Add any plan parameters to the event.
         try:
-          pmessage['plan_meta'] = plan_parameter['metadata']['parameters']
+          pmessage['plan_meta'] = plan_parameter['metadata'].get('parameters', {})
           for param in pmessage['plan_meta']:
             pmessage['plan_params'].append(param)
           #
@@ -127,8 +140,8 @@ try:
             post_plans = pie.hec.post_action(pmessage,host,hec_url,hec_token)
           except Exception as e:
             sys.stderr.write("TA-puppet-alert-orchestrator: Failed to post plan data to Splunk - {}".format(e))
-        except:
-          pass
+        except Exception as e:
+          sys.stderr.write("TA-puppet-alert-orchestrator: Failed to retrieve plan parameters for {} - {} raw response: {}\n".format(plan['name'], e, plan_parameter))
     except Exception as e:
       sys.stderr.write("TA-puppet-alert-orchestrator: Failed to build event message - {}".format(e))
 except Exception as e:

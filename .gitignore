@@ -7,3 +7,9 @@ local/savedsearches.conf
 local/ta_puppet_report_viewer_settings.conf
 metadata/local.meta
 tmpdir/
+
+# Build artifacts
+output/
+TA-puppet-alert-orchestrator/appserver/static/js/build/
+TA-puppet-alert-orchestrator/appserver/templates/
+TA-puppet-alert-orchestrator/lib/

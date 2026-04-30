@@ -33,7 +33,7 @@ def run_puppet_plan(alert, helper):
   rbac_user = alert['global']['puppet_user']
   rbac_user_pass = alert['global']['puppet_user_pass']
 
-  if alert['global']['timeout'] is not None and alert['global']['timeout'] is not '':
+  if alert['global']['timeout'] is not None and alert['global']['timeout'] != '':
     plan_timeout = alert['global']['timeout']
   else:
     plan_timeout = 600
