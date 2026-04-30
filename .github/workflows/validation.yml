@@ -6,49 +6,30 @@ on:
       - main
 
 jobs:
-  build:
+  appinspect:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
-      - name: Install UCC framework
+      - name: Install build and validation dependencies
         run: pip install -r requirements-dev.txt
-
-      - name: Install Python runtime dependencies into lib/
-        run: pip install -r requirements.txt --target TA-puppet-alert-orchestrator/lib
 
       - name: Build configuration page (UCC)
         run: ucc-gen build --source TA-puppet-alert-orchestrator
 
-      - name: Upload built app
-        uses: actions/upload-artifact@v4
-        with:
-          name: built-app
-          path: output/
-
-  appinspect:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install AppInspect
-        run: pip install splunk-appinspect
-
-      - name: Download built app
-        uses: actions/download-artifact@v4
-        with:
-          name: built-app
-
       - name: Run AppInspect
-        run: splunk-appinspect inspect TA-puppet-alert-orchestrator --output-file appinspect_result.json --mode precert --included-tags cloud
+        run: splunk-appinspect inspect output/TA-puppet-alert-orchestrator --output-file appinspect_result.json --mode precert --included-tags cloud
+
+      - name: Upload AppInspect Results
+        uses: actions/upload-artifact@v7
+        with:
+          name: AppInspect_TA-puppet-alert-orchestrator
+          path: appinspect_result.json
 
       - name: Check AppInspect Errors
         id: appinspect-errors
@@ -64,18 +45,12 @@ jobs:
 
       - name: AppInspect Errors
         if: ${{ steps.appinspect-errors.outputs.error_count > 0 }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: core.setFailed('AppInspect contains errors!')
 
       - name: AppInspect Failures
         if: ${{ steps.appinspect-failures.outputs.fail_count > 0 }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: core.setFailed('AppInspect contains failures!')
-
-      - name: Upload AppInspect Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: AppInspect_TA-puppet-alert-orchestrator
-          path: appinspect_result.json

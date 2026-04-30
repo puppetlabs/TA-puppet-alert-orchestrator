@@ -10,13 +10,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set Version ID
         id: version-tag
         run: echo "version=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -24,7 +24,7 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Install Python runtime dependencies into lib/
-        run: pip install -r requirements.txt --target TA-puppet-alert-orchestrator/lib
+        run: pip install -r requirements.txt --target TA-puppet-alert-orchestrator/lib --no-compile
 
       - name: Build configuration page (UCC)
         run: ucc-gen build --source TA-puppet-alert-orchestrator
@@ -33,7 +33,7 @@ jobs:
         run: slim package output/TA-puppet-alert-orchestrator
 
       - name: Upload App Build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: TA-puppet-alert-orchestrator-${{ steps.version-tag.outputs.version }}
           path: TA-puppet-alert-orchestrator-*.tar.gz
