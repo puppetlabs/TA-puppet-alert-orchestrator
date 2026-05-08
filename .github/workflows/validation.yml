@@ -8,19 +8,28 @@ on:
 jobs:
   appinspect:
     runs-on: ubuntu-latest
-    container: ghcr.io/coreymbe/splunk-appinspect:v3
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - name: Set App Name
-        id: repo-name
-        run: |
-          repo_name=$(basename ${{ github.repository }})
-          echo "splunk_app=$repo_name" >> $GITHUB_OUTPUT
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install build and validation dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Build configuration page (UCC)
+        run: ucc-gen build --source TA-puppet-alert-orchestrator
 
       - name: Run AppInspect
-        run: splunk-appinspect inspect ${{ steps.repo-name.outputs.splunk_app }} --output-file appinspect_result.json --mode precert --included-tags cloud
+        run: splunk-appinspect inspect output/TA-puppet-alert-orchestrator --output-file appinspect_result.json --mode precert --included-tags cloud
+
+      - name: Upload AppInspect Results
+        uses: actions/upload-artifact@v7
+        with:
+          name: AppInspect_TA-puppet-alert-orchestrator
+          path: appinspect_result.json
 
       - name: Check AppInspect Errors
         id: appinspect-errors
@@ -36,18 +45,12 @@ jobs:
 
       - name: AppInspect Errors
         if: ${{ steps.appinspect-errors.outputs.error_count > 0 }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: core.setFailed('AppInspect contains errors!')
 
       - name: AppInspect Failures
         if: ${{ steps.appinspect-failures.outputs.fail_count > 0 }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: core.setFailed('AppInspect contains failures!')
-
-      - name: Upload AppInspect Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: AppInspect_${{ steps.repo-name.outputs.splunk_app }}
-          path: appinspect_result.json

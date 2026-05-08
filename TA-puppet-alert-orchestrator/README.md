@@ -45,6 +45,10 @@ The following are required fields.
   * **Splunk HEC URL**: (e.g. `https://http-inputs-<$host>.splunkcloud.com:443/services/collector`)
   * **User**: Username for the default account to be used to trigger actions in PE.
 
+The following are optional fields.
+
+  * **Verify SSL Certificate**: Enable SSL certificate verification for connections to Puppet Enterprise. Disabled by default to support self-signed certificates common in PE installations.
+
 **Note**: See the [Splunk HEC Documentation](https://docs.splunk.com/Documentation/Splunk/latest/Data/UsetheHTTPEventCollector) for details on determining the correct URL for your HEC endpoint. 
 	
 ![Settings](cd719d1e-fcea-11ee-91e6-52042cae3bc7.png)
@@ -156,14 +160,3 @@ The following logs can be reviewed from the Splunk server:
 
 **Note**: Error message verbosity depends on the log level of your installation.
 
-##### Binary File Declaration
-
-```
-bin/ta_puppet_alert_actions/aob_py3/pvectorc.cpython-37m-x86_64-linux-gnu.so: this file does not require any source code
-bin/ta_puppet_alert_actions/aob_py3/setuptools/cli.exe: this file does not require any source code
-bin/ta_puppet_alert_actions/aob_py3/setuptools/cli-32.exe: this file does not require any source code
-bin/ta_puppet_alert_actions/aob_py3/setuptools/cli-64.exe: this file does not require any source code
-bin/ta_puppet_alert_actions/aob_py3/setuptools/gui.exe: this file does not require any source code
-bin/ta_puppet_alert_actions/aob_py3/setuptools/gui-32.exe: this file does not require any source code
-bin/ta_puppet_alert_actions/aob_py3/setuptools/gui-64.exe: this file does not require any source code
-```

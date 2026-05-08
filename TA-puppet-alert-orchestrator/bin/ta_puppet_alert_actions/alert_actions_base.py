@@ -1,5 +1,3 @@
-from __future__ import print_function
-from builtins import str
 import csv
 import gzip
 import sys
@@ -15,8 +13,8 @@ sys.path.insert(0, make_splunkhome_path(["etc", "apps", "Splunk_SA_CIM", "lib"])
 from cim_actions import ModularAction
 from logging_helper import get_logger
 import logging
-from splunk_aoblib.rest_helper import TARestHelper
-from splunk_aoblib.setup_util import Setup_Util
+from splunktaucclib.splunk_aoblib.rest_helper import TARestHelper
+from splunktaucclib.splunk_aoblib.setup_util import Setup_Util
 
 
 class ModularAlertBase(ModularAction):
@@ -111,64 +109,6 @@ class ModularAlertBase(ModularAction):
                                                   timeout=timeout,
                                                   proxy_uri=self._get_proxy_uri() if use_proxy else None)
 
-    def build_http_connection(self, config, timeout=120,
-                              disable_ssl_validation=False):
-        from httplib2 import (socks, ProxyInfo, Http)
-        """
-        :config: dict like, proxy and account information are in the following
-                format {
-                    "username": xx,
-                    "password": yy,
-                    "proxy_url": zz,
-                    "proxy_port": aa,
-                    "proxy_username": bb,
-                    "proxy_password": cc,
-                    "proxy_type": http,http_no_tunnel,sock4,sock5,
-                    "proxy_rdns": 0 or 1,
-                }
-        :return: Http2.Http object
-        """
-        if not config:
-            config = {}
-
-        proxy_type_to_code = {
-            "http": socks.PROXY_TYPE_HTTP,
-            "http_no_tunnel": socks.PROXY_TYPE_HTTP_NO_TUNNEL,
-            "socks4": socks.PROXY_TYPE_SOCKS4,
-            "socks5": socks.PROXY_TYPE_SOCKS5,
-        }
-        if config.get("proxy_type") in proxy_type_to_code:
-            proxy_type = proxy_type_to_code[config["proxy_type"]]
-        else:
-            proxy_type = socks.PROXY_TYPE_HTTP
-
-        rdns = config.get("proxy_rdns")
-
-        proxy_info = None
-        if config.get("proxy_url") and config.get("proxy_port"):
-            if config.get("proxy_username") and config.get("proxy_password"):
-                proxy_info = ProxyInfo(proxy_type=proxy_type,
-                                       proxy_host=config["proxy_url"],
-                                       proxy_port=int(config["proxy_port"]),
-                                       proxy_user=config["proxy_username"],
-                                       proxy_pass=config["proxy_password"],
-                                       proxy_rdns=rdns)
-            else:
-                proxy_info = ProxyInfo(proxy_type=proxy_type,
-                                       proxy_host=config["proxy_url"],
-                                       proxy_port=int(config["proxy_port"]),
-                                       proxy_rdns=rdns)
-        if proxy_info:
-            http = Http(proxy_info=proxy_info, timeout=timeout,
-                        disable_ssl_certificate_validation=disable_ssl_validation)
-        else:
-            http = Http(timeout=timeout,
-                        disable_ssl_certificate_validation=disable_ssl_validation)
-
-        if config.get("username") and config.get("password"):
-            http.add_credentials(config["username"], config["password"])
-        return http
-
     def process_event(self, *args, **kwargs):
         raise NotImplemented()
 
@@ -179,10 +119,7 @@ class ModularAlertBase(ModularAction):
 
     def get_events(self):
         try:
-            try:
-                self.result_handle = gzip.open(self.results_file, 'rt')
-            except ValueError: # Workaround for Python 2.7 on Windows
-                self.result_handle = gzip.open(self.results_file, 'r')
+            self.result_handle = gzip.open(self.results_file, 'rt')
             return (self.pre_handle(num, result) for num, result in enumerate(csv.DictReader(self.result_handle)))
         except IOError:
             msg = "Error: {}."
@@ -191,10 +128,7 @@ class ModularAlertBase(ModularAction):
 
     def prepare_meta_for_cam(self):
         try:
-            try:
-                rf = gzip.open(self.results_file, 'rt')
-            except ValueError: # Workaround for Python 2.7 on Windows
-                rf = gzip.open(self.results_file, 'r')
+            rf = gzip.open(self.results_file, 'rt')
             for num, result in enumerate(csv.DictReader(rf)):
                 result.setdefault('rid', str(num))
                 self.update(result)

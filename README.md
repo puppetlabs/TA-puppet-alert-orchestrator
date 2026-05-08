@@ -47,6 +47,10 @@ The following are required fields.
   * **Splunk HEC URL**: (e.g. `https://http-inputs-<$host>.splunkcloud.com:443/services/collector`)
   * **User**: Username for the default account to be used to trigger actions in PE.
 
+The following are optional fields.
+
+  * **Verify SSL Certificate**: Enable SSL certificate verification for connections to Puppet Enterprise. Disabled by default to support self-signed certificates common in PE installations.
+
 **Note**: See the [Splunk HEC Documentation](https://docs.splunk.com/Documentation/Splunk/latest/Data/UsetheHTTPEventCollector) for details on determining the correct URL for your HEC endpoint. 
 	
 ![Settings](TA-puppet-alert-orchestrator/readme/img/settings_config.png)

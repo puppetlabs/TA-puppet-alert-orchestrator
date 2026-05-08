@@ -59,7 +59,7 @@ def run_puppet_task(alert, helper):
   rbac_user = alert['global']['puppet_user']
   rbac_user_pass = alert['global']['puppet_user_pass']
 
-  if alert['global']['timeout'] is not None and alert['global']['timeout'] is not '':
+  if alert['global']['timeout'] is not None and alert['global']['timeout'] != '':
     task_timeout = alert['global']['timeout']
   else:
     task_timeout = 360

@@ -82,7 +82,7 @@ def run_report_generation(alert, transaction_uuids, helper):
   pdbpass = alert['global']['puppet_read_user_pass']
 
   # we don't use timeouts in these queries but we're using it for token lifetime generation
-  if alert['global']['timeout'] is not None and alert['global']['timeout'] is not '':
+  if alert['global']['timeout'] is not None and alert['global']['timeout'] != '':
     timeout = alert['global']['timeout']
   else:
     timeout = 360
