@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<form version="1.1">
+  <label>Orchestrator Actions</label>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="dropdown" token="action_type" searchWhenChanged="true">
+      <label>Action Type</label>
+      <default>task</default>
+      <choice value="task">Tasks</choice>
+      <choice value="plan">Plans</choice>
+    </input>
+    <input type="dropdown" token="action_name" searchWhenChanged="true">
+      <label>Name</label>
+      <default>*</default>
+      <choice value="*">All</choice>
+      <search>
+        <query>`puppet_actions_index` sourcetype=puppet:action | eval action_name=if("$action_type$"="task", task_name, plan_name) | where isnotnull(action_name) AND action_name!="" | dedup action_name | sort action_name | table action_name</query>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </search>
+      <fieldForValue>action_name</fieldForValue>
+      <fieldForLabel>action_name</fieldForLabel>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <table>
+        <search>
+          <query>`puppet_actions_index` sourcetype=puppet:action | spath path=task_params{} output=task_params | spath path=plan_params{} output=plan_params | eval action_name=if("$action_type$"="task", task_name, plan_name), action_params=if("$action_type$"="task", mvjoin(task_params, ", "), mvjoin(plan_params, ", ")) | where isnotnull(action_name) AND action_name!="" | search action_name="$action_name$" | dedup user, action_name | rename user as User, action_name as Name, permitted as Permitted, action_params as Parameters | table User, Name, Permitted, Parameters</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+</form>
