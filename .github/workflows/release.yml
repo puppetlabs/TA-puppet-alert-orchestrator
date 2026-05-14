@@ -8,6 +8,8 @@ on:
 jobs:
   build-and-package:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v6
@@ -32,8 +34,11 @@ jobs:
       - name: Package app
         run: slim package output/TA-puppet-alert-orchestrator
 
-      - name: Upload App Build
-        uses: actions/upload-artifact@v7
-        with:
-          name: TA-puppet-alert-orchestrator-${{ steps.version-tag.outputs.version }}
-          path: TA-puppet-alert-orchestrator-*.tar.gz
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ steps.version-tag.outputs.version }} \
+            TA-puppet-alert-orchestrator-*.tar.gz \
+            --title "${{ steps.version-tag.outputs.version }}" \
+            --generate-notes
