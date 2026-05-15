@@ -20,6 +20,10 @@ pip install -r requirements.txt --target TA-puppet-alert-orchestrator/lib
 # Build
 ucc-gen build --source TA-puppet-alert-orchestrator --overwrite
 
+# Strip executable bits before packaging (only needed if uploading to Splunkbase —
+# wheels ship with +x bits that fail the cloud appinspect check)
+find output/TA-puppet-alert-orchestrator -type f -exec chmod 644 {} +
+
 # Package (for local testing or manual Splunkbase upload)
 slim package output/TA-puppet-alert-orchestrator
 ```
@@ -116,8 +120,8 @@ Version is set in three places and must be kept in sync:
 
 ## CI
 
-- **validation.yml** — runs on every PR to `main`. Builds with `ucc-gen`, uploads `output/` as an artifact, then runs `splunk-appinspect` in a separate job using the custom container at `ghcr.io/coreymbe/splunk-appinspect`.
-- **release.yml** — runs on version tags (`v*.*.*`). Builds and packages with `slim`, uploads the `.tar.gz` as a GitHub Actions artifact.
+- **validation.yml** — runs on every PR to `main`. Builds with `ucc-gen`, runs `splunk-appinspect` (precert mode, cloud tag) against the build output, uploads the JSON report as an artifact, and fails the job on any errors or failures. `splunk-appinspect` is installed via `pip` from `requirements-dev.txt`.
+- **release.yml** — runs on version tags (`v*.*.*`). Installs runtime deps into `lib/`, builds with `ucc-gen --ta-version <semver>`, normalizes file permissions to 644 (wheels ship with +x bits that fail Splunkbase's cloud check), packages with `slim`, and publishes the resulting `.tar.gz` as a GitHub Release.
 
 ## Adding a new alert action
 
