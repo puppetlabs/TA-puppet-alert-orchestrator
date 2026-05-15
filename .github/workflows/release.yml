@@ -28,8 +28,14 @@ jobs:
       - name: Install Python build dependencies
         run: pip install -r requirements-dev.txt
 
+      - name: Install Python runtime dependencies into lib/
+        run: pip install -r requirements.txt --target TA-puppet-alert-orchestrator/lib --no-compile
+
       - name: Build configuration page (UCC)
         run: ucc-gen build --source TA-puppet-alert-orchestrator --ta-version ${{ steps.version-tag.outputs.semver }}
+
+      - name: Normalize file permissions
+        run: find output/TA-puppet-alert-orchestrator -type f -exec chmod 644 {} +
 
       - name: Package app
         run: slim package output/TA-puppet-alert-orchestrator
