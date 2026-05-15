@@ -112,7 +112,7 @@ Version is set in three places and must be kept in sync:
 - `TA-puppet-alert-orchestrator/default/app.conf` → `[id] version` and `[launcher] version`
 - `TA-puppet-alert-orchestrator/app.manifest` → `info.id.version`
 
-`ucc-gen build` appends the short git SHA to the `globalConfig.json` version at build time (e.g. `2.0.0+a1b2c3d`). The source file should contain only the clean semver.
+`ucc-gen build` appends the short git SHA to the `globalConfig.json` version by default (e.g. `2.0.0+a1b2c3d`). The release workflow passes `--ta-version` (derived from the pushed tag, with the leading `v` stripped) so the packaged artifact carries the clean semver. The source `globalConfig.json` should still contain only the clean semver.
 
 ## CI
 

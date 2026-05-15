@@ -16,7 +16,10 @@ jobs:
 
       - name: Set Version ID
         id: version-tag
-        run: echo "version=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+        run: |
+          tag="${GITHUB_REF#refs/*/}"
+          echo "version=${tag}" >> $GITHUB_OUTPUT
+          echo "semver=${tag#v}" >> $GITHUB_OUTPUT
 
       - uses: actions/setup-python@v6
         with:
@@ -25,11 +28,8 @@ jobs:
       - name: Install Python build dependencies
         run: pip install -r requirements-dev.txt
 
-      - name: Install Python runtime dependencies into lib/
-        run: pip install -r requirements.txt --target TA-puppet-alert-orchestrator/lib --no-compile
-
       - name: Build configuration page (UCC)
-        run: ucc-gen build --source TA-puppet-alert-orchestrator
+        run: ucc-gen build --source TA-puppet-alert-orchestrator --ta-version ${{ steps.version-tag.outputs.semver }}
 
       - name: Package app
         run: slim package output/TA-puppet-alert-orchestrator
